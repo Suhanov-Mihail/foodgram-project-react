@@ -1,12 +1,18 @@
 from django.contrib import admin
 
-from recipes.models import (Tag, Ingridient, IngridientInRecipe,
+from recipes.models import (Tag, TagRecipe, Ingridient, IngridientInRecipe,
                             Recipe, Favorite, ShoppingList)
 
 
 class RecipeIngredientsInline(admin.TabularInline):
 
     model = IngridientInRecipe
+    extra = 1
+
+
+class RecipeTagInLine(admin.TabularInline):
+
+    model = TagRecipe
     extra = 1
 
 
@@ -18,6 +24,7 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ['name', 'author', 'cooking_time', 'text']
     list_filter = ['name', 'author', 'tags']
     empty_value_display = '-empty-'
+    inlines = [RecipeIngredientsInline, RecipeIngredientsInline]
 
 
 @admin.register(Tag)

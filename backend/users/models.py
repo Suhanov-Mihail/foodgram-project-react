@@ -11,23 +11,6 @@ class User(AbstractUser):
         blank=False,
         null=False
     )
-    username = models.CharField(
-        verbose_name='Имя пользователя',
-        max_length=150,
-        unique=True,
-        blank=False,
-        null=False
-    )
-    first_name = models.CharField(
-        verbose_name='Имя',
-        max_length=150,
-        blank=True
-    )
-    last_name = models.CharField(
-        verbose_name='Фамилия',
-        max_length=150,
-        blank=True
-    )
 
     class Meta:
         verbose_name = 'Пользователь'

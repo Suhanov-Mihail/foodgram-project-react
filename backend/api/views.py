@@ -1,9 +1,12 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from rest_framework import filters
 from rest_framework import status
+from rest_framework import permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
@@ -11,11 +14,62 @@ from rest_framework.response import Response
 
 from recipes.models import (Ingridient, Tag, Recipe,
                             Favorite, ShoppingList, IngridientInRecipe)
-from users.serializers import RecipeShortSerializer
+from users.models import Subscribe
 from .filters import RecipeFilter
-from .serializers import (IngridientSerializer, TagSerializer,
-                          RecipeCreateUpdateSerializer, RecipeListSerializer)
+from .serializers import (IngridientSerializer, MineUserSerializer,
+                          SubscribeSerializer, TagSerializer,
+                          RecipeCreateUpdateSerializer,
+                          RecipeListSerializer, RecipeShortSerializer)
 from .permissions import IsAuthorOrAdminPermissoin
+
+
+User = get_user_model()
+
+
+class CastomUserViewSet(UserViewSet):
+    """Viewset для модели юзера"""
+    queryset = User.objects.all()
+    serializer_class = MineUserSerializer
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
+    def subscribe(self, request, **kwargs):
+        """Метод для подписки/отписки от автора."""
+        user = request.user
+        author_id = self.kwargs.get('id')
+        author = get_object_or_404(User, id=author_id)
+
+        if request.method == 'POST':
+            serializer = SubscribeSerializer(author,
+                                             data=request.data,
+                                             context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            Subscribe.objects.create(user=user, author=author)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            subscription = get_object_or_404(Subscribe,
+                                             user=user,
+                                             author=author)
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated]
+    )
+    def subscriptions(self, request):
+        """Метод для просмотра подписок на авторов."""
+        user = request.user
+        queryset = User.objects.filter(subscribing__user=user)
+        pages = self.paginate_queryset(queryset)
+        serializer = SubscribeSerializer(pages,
+                                         many=True,
+                                         context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
 
 class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -35,7 +89,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Viewset для рецептов"""
     queryset = Recipe.objects.all()
-    permission_classes = [IsAuthorOrAdminPermissoin]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly, IsAuthorOrAdminPermissoin]
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
 
@@ -58,7 +113,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
-    def favorite(self, request, pk):
+    def shopping_cart(self, request, pk):
         """Добавление или удаление для списка покупок"""
         if request.method == 'POST':
             self.add_to(ShoppingList, request.user, pk)
