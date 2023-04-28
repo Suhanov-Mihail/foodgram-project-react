@@ -7,7 +7,7 @@ services:
     env_file:
       - ./.env
 
-  backend:
+  web:
     image: suhanov94/foodgram_backend
     restart: always
     volumes:
