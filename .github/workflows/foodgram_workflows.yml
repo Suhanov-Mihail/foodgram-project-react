@@ -81,8 +81,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
-            sudo docker-compose stop
-            sudo docker-compose rm
+            sudo docker-compose down
+            sudo docker image -a -f
             touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
             echo DB_NAME=${{ secrets.DB_NAME }} >> .env
@@ -92,7 +92,9 @@ jobs:
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             echo ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} >> .env
-            sudo docker-compose up --build
+            sudo docker-compose up -b
+            sudo docker-compose exec -T backend manage.py migrate
+            sudo docker-compose exec -T backend manage.py collectstatic --no-input
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
