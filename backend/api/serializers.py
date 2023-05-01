@@ -188,7 +188,6 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField()
-    author = MineUserSerializer(read_only=True)
 
     def validated_data(self, value):
         if len(value) < 1:
@@ -229,11 +228,11 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags', None)
         if tags is not None:
             instance.tags.set(tags)
-        ingredients = validated_data.pop('ingredients', None)
-        if ingredients is not None:
-            instance.ingredients.clear()
+        ingridients = validated_data.pop('ingridients', None)
+        if ingridients is not None:
+            instance.ingridients.clear()
             self.create_ingridients(recipe=instance,
-                                    ingredients=ingredients)
+                                    ingridients=ingridients)
 
         return super().update(instance, validated_data)
 

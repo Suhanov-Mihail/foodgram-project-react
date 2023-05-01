@@ -24,7 +24,7 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ['name', 'author', 'cooking_time', 'text']
     list_filter = ['name', 'author', 'tags']
     empty_value_display = '-empty-'
-    inlines = [RecipeIngredientsInline, RecipeIngredientsInline]
+    inlines = [RecipeIngredientsInline, RecipeTagInLine]
 
 
 @admin.register(Tag)

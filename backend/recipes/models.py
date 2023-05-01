@@ -35,7 +35,7 @@ class Tag(models.Model):
 class Ingridient(models.Model):
     """Модель ингридиента"""
     name = models.CharField(
-        max_length=50,
+        max_length=200,
         verbose_name='Название'
     )
     measurement_unit = models.CharField(

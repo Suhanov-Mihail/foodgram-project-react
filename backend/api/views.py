@@ -147,14 +147,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipes = [item.recipe.id for item in shopping_cart]
         buy_list = IngridientInRecipe.objects.filter(
             recipe__in=recipes).values(
-            'ingredient').annotate(amount=Sum('amount'))
+            'ingridient').annotate(amount=Sum('amount'))
         buy_list_text = 'Список покупок с сайта Foodgram:\n\n'
         for item in buy_list:
-            ingredient = Ingridient.objects.get(pk=item['ingredient'])
+            ingridient = Ingridient.objects.get(pk=item['ingridient'])
             amount = item['amount']
             buy_list_text += (
-                f'{ingredient.name}, {amount} '
-                f'{ingredient.measurement_unit}\n'
+                f'{ingridient.name}, {amount} '
+                f'{ingridient.measurement_unit}\n'
             )
         response = HttpResponse(buy_list_text, content_type="text/plain")
         response['Content-Disposition'] = (
