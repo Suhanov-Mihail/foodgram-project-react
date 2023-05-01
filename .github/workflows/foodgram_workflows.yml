@@ -92,7 +92,7 @@ jobs:
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             echo ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} >> .env
-            sudo docker-compose up -b
+            sudo docker-compose up -d
             sudo docker-compose exec -T backend manage.py migrate
             sudo docker-compose exec -T backend manage.py collectstatic --no-input
   send_message:
