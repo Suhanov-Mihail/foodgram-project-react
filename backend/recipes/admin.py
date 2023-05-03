@@ -1,12 +1,12 @@
 from django.contrib import admin
 
-from recipes.models import (Tag, TagRecipe, Ingridient, IngridientInRecipe,
+from recipes.models import (Tag, TagRecipe, Ingredient, IngredientInRecipe,
                             Recipe, Favorite, ShoppingList)
 
 
 class RecipeIngredientsInline(admin.TabularInline):
 
-    model = IngridientInRecipe
+    model = IngredientInRecipe
     extra = 1
 
 
@@ -34,7 +34,7 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ['name', 'color', 'slug']
 
 
-@admin.register(Ingridient)
+@admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
 
     list_display = ['pk', 'name', 'measurement_unit']
@@ -42,12 +42,12 @@ class IngredientAdmin(admin.ModelAdmin):
     list_filter = ['name', 'measurement_unit']
 
 
-@admin.register(IngridientInRecipe)
-class IngridientInRecipeAdmin(admin.ModelAdmin):
+@admin.register(IngredientInRecipe)
+class IngredientInRecipeAdmin(admin.ModelAdmin):
 
-    list_display = ['pk', 'recipe', 'ingridient', 'amount']
-    search_fields = ['recipe', 'ingridient']
-    list_filter = ['recipe', 'ingridient']
+    list_display = ['pk', 'recipe', 'ingredient', 'amount']
+    search_fields = ['recipe', 'ingredient']
+    list_filter = ['recipe', 'ingredient']
 
 
 @admin.register(Favorite)

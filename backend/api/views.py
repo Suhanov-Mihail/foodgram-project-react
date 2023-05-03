@@ -4,19 +4,19 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework import filters
 from rest_framework import status
-from rest_framework import permissions
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from recipes.models import (Ingridient, Tag, Recipe,
-                            Favorite, ShoppingList, IngridientInRecipe)
+from recipes.models import (Ingredient, Tag, Recipe,
+                            Favorite, ShoppingList, IngredientInRecipe)
 from users.models import Subscribe
-from .filters import RecipeFilter
-from .serializers import (IngridientSerializer, MineUserSerializer,
+from .pagination import CustomPagination
+from .filters import IngredientFilter, RecipeFilter
+from .serializers import (IngredientSerializer, MineUserSerializer,
                           SubscribeSerializer, TagSerializer,
                           RecipeCreateUpdateSerializer,
                           RecipeListSerializer, RecipeShortSerializer)
@@ -30,6 +30,7 @@ class CastomUserViewSet(UserViewSet):
     """Viewset для модели юзера"""
     queryset = User.objects.all()
     serializer_class = MineUserSerializer
+    pagination_class = CustomPagination
 
     @action(
         detail=True,
@@ -72,12 +73,12 @@ class CastomUserViewSet(UserViewSet):
         return self.get_paginated_response(serializer.data)
 
 
-class IngridientViewSet(viewsets.ReadOnlyModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Viewset для просмотра ингридиентовч"""
-    queryset = Ingridient.objects.all()
-    serializer_class = IngridientSerializer
-    filter_backends = [filters.SearchFilter, ]
-    search_fields = ['^name']
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -89,8 +90,9 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Viewset для рецептов"""
     queryset = Recipe.objects.all()
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly, IsAuthorOrAdminPermissoin]
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsAuthorOrAdminPermissoin, )
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
 
@@ -102,23 +104,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeCreateUpdateSerializer
         return RecipeListSerializer
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
     def favorite(self, request, pk):
-        """Добавление или удаление для списка избранного"""
+        """Метод для добавления/удаления из избранного."""
         if request.method == 'POST':
-            self.add_to(Favorite, request.user, pk)
+            return self.add_to(Favorite, request.user, pk)
         else:
-            return self.remove_form(Favorite, request.user, pk)
+            return self.delete_from(Favorite, request.user, pk)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
     def shopping_cart(self, request, pk):
-        """Добавление или удаление для списка покупок"""
+        """Метод для добавления/удаления из списка покупок."""
         if request.method == 'POST':
-            self.add_to(ShoppingList, request.user, pk)
+            return self.add_to(ShoppingList, request.user, pk)
         else:
-            return self.remove_form(ShoppingList, request.user, pk)
+            return self.delete_from(ShoppingList, request.user, pk)
 
     def add_to(self, model, user, pk):
         """Метод для добавления."""
@@ -130,7 +138,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer = RecipeShortSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def remove_form(self, model, user, pk):
+    def delete_from(self, model, user, pk):
         """Метод для удаления."""
         obj = model.objects.filter(user=user, recipe__id=pk)
         if obj.exists():
@@ -145,16 +153,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Скачивание списка покупок"""
         shopping_cart = ShoppingList.objects.filter(user=self.request.user)
         recipes = [item.recipe.id for item in shopping_cart]
-        buy_list = IngridientInRecipe.objects.filter(
+        buy_list = IngredientInRecipe.objects.filter(
             recipe__in=recipes).values(
-            'ingridient').annotate(amount=Sum('amount'))
+            'ingredient').annotate(amount=Sum('amount'))
         buy_list_text = 'Список покупок с сайта Foodgram:\n\n'
         for item in buy_list:
-            ingridient = Ingridient.objects.get(pk=item['ingridient'])
+            ingredient = Ingredient.objects.get(pk=item['ingredient'])
             amount = item['amount']
             buy_list_text += (
-                f'{ingridient.name}, {amount} '
-                f'{ingridient.measurement_unit}\n'
+                f'{ingredient.name}, {amount} '
+                f'{ingredient.measurement_unit}\n'
             )
         response = HttpResponse(buy_list_text, content_type="text/plain")
         response['Content-Disposition'] = (

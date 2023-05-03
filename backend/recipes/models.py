@@ -32,7 +32,7 @@ class Tag(models.Model):
         return self.name
 
 
-class Ingridient(models.Model):
+class Ingredient(models.Model):
     """Модель ингридиента"""
     name = models.CharField(
         max_length=200,
@@ -44,8 +44,8 @@ class Ingridient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
         return f'{self.name} ({self.measurement_unit})'
@@ -75,10 +75,10 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор'
     )
-    ingridients = models.ManyToManyField(
-        Ingridient,
-        through='IngridientInRecipe',
-        through_fields=('recipe', 'ingridient'),
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientInRecipe',
+        through_fields=('recipe', 'ingredient'),
         related_name='recipes',
         verbose_name='Ингридиенты в рецепте',
     )
@@ -111,13 +111,13 @@ class Recipe(models.Model):
         return self.name
 
 
-class IngridientInRecipe(models.Model):
+class IngredientInRecipe(models.Model):
     """Модель ингридиента в рецепте"""
     amount = models.PositiveIntegerField(
         verbose_name='Количество'
     )
-    ingridient = models.ForeignKey(
-        Ingridient,
+    ingredient = models.ForeignKey(
+        Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ингридиент'
     )
@@ -128,11 +128,11 @@ class IngridientInRecipe(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиент в рецепте'
-        verbose_name_plural = 'Ингридиенты в рецепте'
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
 
     def __str__(self):
-        return f'{self.ingridient} в {self.recipe}'
+        return f'{self.ingredient} в {self.recipe}'
 
 
 class TagRecipe(models.Model):
@@ -190,11 +190,13 @@ class ShoppingList(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='shopping_list',
         verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='shopping_list',
         verbose_name='Рецепт'
     )
 
