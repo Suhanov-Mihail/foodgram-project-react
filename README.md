@@ -46,25 +46,25 @@ ALLOWED_HOSTS           # *
 
 - Создать и запустить контейнеры Docker, выполнить команду на сервере:
 ```
-sudo docker compose up -d
+sudo docker-compose up -d
 ```
 
 - После успешной сборки выполнить миграции:
 ```
-sudo docker compose exec backend python manage.py migrate
+sudo docker-compose exec backend python manage.py migrate
 ```
 
 - Создать суперпользователя:
 ```
-sudo docker compose exec backend python manage.py createsuperuser
+sudo docker-compose exec backend python manage.py createsuperuser
 ```
 
 - Собрать статику:
 ```
-sudo docker compose exec backend python manage.py collectstatic --noinput
+sudo docker-compose exec backend python manage.py collectstatic --noinput
 ```
 
 - Команда для заполнения тестовыми данными:
 ```
-docker-compose exec backend python manage.py load_ingredients
+sudo docker-compose exec backend python manage.py load_ingredients
 ```
