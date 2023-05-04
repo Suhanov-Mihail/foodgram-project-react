@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
 from drf_base64.fields import Base64ImageField
 from rest_framework import exceptions, serializers
 from rest_framework import status
@@ -189,7 +190,18 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         many=True
     )
     image = Base64ImageField()
-    cooking_time = serializers.IntegerField()
+    cooking_time = serializers.IntegerField(
+        validators=(
+            MinValueValidator(
+                1,
+                message='Время приготовления должно быть 1 или более.'
+            ),
+            MaxValueValidator(
+                1440,
+                message='Время приготовления не более суток.'
+            )
+        )
+    )
 
     class Meta:
         model = Recipe
